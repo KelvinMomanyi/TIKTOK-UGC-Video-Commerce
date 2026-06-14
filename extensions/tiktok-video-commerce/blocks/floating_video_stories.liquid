@@ -1,0 +1,23 @@
+{% render 'tvc-widget', block: block, mode: 'floating_stories' %}
+
+{% schema %}
+{
+  "name": "Floating video stories",
+  "target": "body",
+  "settings": [
+    { "type": "text", "id": "widget_token", "label": "Widget token" },
+    { "type": "text", "id": "heading", "label": "Heading", "default": "Stories" },
+    { "type": "select", "id": "layout", "label": "Layout", "default": "stories", "options": [
+      { "value": "stories", "label": "Stories" }
+    ]},
+    { "type": "select", "id": "theme", "label": "Theme", "default": "auto", "options": [
+      { "value": "auto", "label": "Auto" },
+      { "value": "light", "label": "Light" },
+      { "value": "dark", "label": "Dark" }
+    ]},
+    { "type": "text", "id": "aspect_ratio", "label": "Video aspect ratio", "default": "9 / 16" },
+    { "type": "text", "id": "api_path", "label": "Widget API path", "default": "/apps/tvc/widgets" },
+    { "type": "text", "id": "analytics_path", "label": "Analytics API path", "default": "/apps/tvc/analytics" }
+  ]
+}
+{% endschema %}

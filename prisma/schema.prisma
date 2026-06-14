@@ -1,0 +1,385 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum VideoSource {
+  TIKTOK
+  UPLOAD
+  EXTERNAL
+}
+
+enum VideoProvider {
+  MUX
+  CLOUDFLARE_STREAM
+  EXTERNAL
+}
+
+enum VideoStatus {
+  UPLOADING
+  IMPORTING
+  PROCESSING
+  READY
+  FAILED
+  ARCHIVED
+}
+
+enum WidgetType {
+  HOME_FEED
+  PRODUCT_CAROUSEL
+  FLOATING_STORIES
+  COLLECTION_FEED
+}
+
+enum WidgetStatus {
+  DRAFT
+  PUBLISHED
+  PAUSED
+}
+
+enum PlacementTarget {
+  HOME
+  PRODUCT
+  COLLECTION
+  CUSTOM
+  ALL
+}
+
+enum AnalyticsEventType {
+  IMPRESSION
+  VIEW
+  WATCH_TIME
+  CLICK
+  ADD_TO_CART
+  CHECKOUT_STARTED
+  PURCHASE
+}
+
+enum SubscriptionPlan {
+  STARTER
+  GROWTH
+  PRO
+}
+
+enum SubscriptionStatus {
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  FROZEN
+  EXPIRED
+}
+
+enum AIInsightType {
+  CAPTION
+  HOOK
+  THUMBNAIL
+  VIRAL_SCORE
+  OPTIMIZATION
+}
+
+enum AIInsightStatus {
+  QUEUED
+  READY
+  FAILED
+}
+
+model Merchant {
+  id             String    @id @default(cuid())
+  shop           String    @unique
+  shopifyShopId  String?
+  name           String?
+  email          String?
+  plan           SubscriptionPlan @default(STARTER)
+  publicApiToken String    @unique @default(cuid())
+  settings       Json      @default("{}")
+  onboardedAt    DateTime?
+  installedAt    DateTime  @default(now())
+  uninstalledAt  DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  videos          Video[]
+  productTags     ProductTag[]
+  widgets         Widget[]
+  widgetPlacements WidgetPlacement[]
+  analyticsEvents AnalyticsEvent[]
+  analyticsRollups AnalyticsDailyRollup[]
+  subscriptions   Subscription[]
+  aiInsights      AIInsight[]
+
+  @@index([plan])
+  @@index([uninstalledAt])
+}
+
+model Session {
+  id                  String    @id
+  shop                String
+  state               String
+  isOnline            Boolean   @default(false)
+  scope               String?
+  expires             DateTime?
+  accessToken         String
+  userId              BigInt?
+  firstName           String?
+  lastName            String?
+  email               String?
+  accountOwner        Boolean   @default(false)
+  locale              String?
+  collaborator        Boolean?  @default(false)
+  emailVerified       Boolean?  @default(false)
+  refreshToken        String?
+  refreshTokenExpires DateTime?
+
+  @@index([shop])
+  @@index([isOnline])
+}
+
+model Video {
+  id                 String        @id @default(cuid())
+  merchantId         String
+  source             VideoSource
+  provider           VideoProvider @default(EXTERNAL)
+  status             VideoStatus   @default(PROCESSING)
+  title              String
+  caption            String?
+  originalUrl        String?
+  importUrl          String?
+  uploadUrl          String?
+  providerAssetId    String?
+  providerPlaybackId String?
+  playbackUrl        String?
+  thumbnailUrl       String?
+  durationSeconds    Float?
+  width              Int?
+  height             Int?
+  aspectRatio        String?
+  failureReason      String?
+  metadata           Json          @default("{}")
+  impressions        Int           @default(0)
+  views              Int           @default(0)
+  clicks             Int           @default(0)
+  conversions        Int           @default(0)
+  publishedAt        DateTime?
+  deletedAt          DateTime?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  merchant        Merchant         @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  productTags     ProductTag[]
+  widgetVideos    WidgetVideo[]
+  analyticsEvents AnalyticsEvent[]
+  aiInsights      AIInsight[]
+
+  @@index([merchantId, status, createdAt])
+  @@index([merchantId, deletedAt])
+  @@index([provider, providerAssetId])
+}
+
+model ProductTag {
+  id                String    @id @default(cuid())
+  merchantId        String
+  videoId           String
+  shopifyProductId  String
+  shopifyVariantId  String?
+  productHandle     String?
+  title             String
+  imageUrl          String?
+  priceAmount       Decimal?  @db.Decimal(12, 2)
+  currencyCode      String?
+  x                 Float
+  y                 Float
+  startTimeSeconds  Float     @default(0)
+  endTimeSeconds    Float?
+  ctaLabel          String    @default("Shop now")
+  clickUrl          String?
+  sortOrder         Int       @default(0)
+  metadata          Json      @default("{}")
+  deletedAt         DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  merchant        Merchant         @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  video           Video            @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  analyticsEvents AnalyticsEvent[]
+
+  @@index([merchantId, videoId, deletedAt])
+  @@index([shopifyProductId])
+  @@index([shopifyVariantId])
+}
+
+model Widget {
+  id               String       @id @default(cuid())
+  merchantId       String
+  publicToken      String       @unique @default(cuid())
+  name             String
+  title            String?
+  type             WidgetType
+  status           WidgetStatus @default(DRAFT)
+  layout           String       @default("grid")
+  settings         Json         @default("{}")
+  productId        String?
+  productHandle    String?
+  collectionId     String?
+  collectionHandle String?
+  publishedAt      DateTime?
+  deletedAt        DateTime?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  merchant        Merchant          @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  placements      WidgetPlacement[]
+  widgetVideos    WidgetVideo[]
+  analyticsEvents AnalyticsEvent[]
+  analyticsRollups AnalyticsDailyRollup[]
+
+  @@index([merchantId, status, type])
+  @@index([merchantId, deletedAt])
+  @@index([productHandle])
+  @@index([collectionHandle])
+}
+
+model WidgetVideo {
+  id        String   @id @default(cuid())
+  widgetId  String
+  videoId   String
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  widget Widget @relation(fields: [widgetId], references: [id], onDelete: Cascade)
+  video  Video  @relation(fields: [videoId], references: [id], onDelete: Cascade)
+
+  @@unique([widgetId, videoId])
+  @@index([widgetId, sortOrder])
+  @@index([videoId])
+}
+
+model WidgetPlacement {
+  id             String          @id @default(cuid())
+  merchantId     String
+  widgetId       String
+  target         PlacementTarget
+  resourceId     String?
+  resourceHandle String?
+  enabled        Boolean         @default(true)
+  position       String          @default("main")
+  conditions     Json            @default("{}")
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  merchant Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  widget   Widget   @relation(fields: [widgetId], references: [id], onDelete: Cascade)
+
+  @@index([merchantId, target, enabled])
+  @@index([widgetId])
+  @@index([resourceHandle])
+}
+
+model AnalyticsEvent {
+  id            String             @id @default(cuid())
+  merchantId    String
+  widgetId      String?
+  videoId       String?
+  productTagId  String?
+  type          AnalyticsEventType
+  occurredAt    DateTime           @default(now())
+  visitorId     String?
+  sessionId     String?
+  watchTimeMs   Int?
+  revenueAmount Decimal?           @db.Decimal(12, 2)
+  currencyCode  String?
+  quantity      Int?
+  orderId       String?
+  cartToken     String?
+  productId     String?
+  variantId     String?
+  path          String?
+  referrer      String?
+  userAgentHash String?
+  ipHash        String?
+  metadata      Json               @default("{}")
+
+  merchant   Merchant    @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  widget     Widget?     @relation(fields: [widgetId], references: [id], onDelete: SetNull)
+  video      Video?      @relation(fields: [videoId], references: [id], onDelete: SetNull)
+  productTag ProductTag? @relation(fields: [productTagId], references: [id], onDelete: SetNull)
+
+  @@index([merchantId, type, occurredAt])
+  @@index([merchantId, occurredAt])
+  @@index([widgetId, type, occurredAt])
+  @@index([videoId, type, occurredAt])
+  @@index([visitorId, occurredAt])
+  @@index([orderId])
+}
+
+model AnalyticsDailyRollup {
+  id            String   @id @default(cuid())
+  merchantId    String
+  widgetId      String?
+  day           DateTime
+  impressions   Int      @default(0)
+  views         Int      @default(0)
+  watchTimeMs   Int      @default(0)
+  clicks        Int      @default(0)
+  addToCarts    Int      @default(0)
+  purchases     Int      @default(0)
+  revenueAmount Decimal  @default(0) @db.Decimal(14, 2)
+  currencyCode  String   @default("USD")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  merchant Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  widget   Widget?  @relation(fields: [widgetId], references: [id], onDelete: Cascade)
+
+  @@unique([merchantId, widgetId, day])
+  @@index([merchantId, day])
+  @@index([widgetId, day])
+}
+
+model Subscription {
+  id                    String             @id @default(cuid())
+  merchantId            String
+  shopifySubscriptionId String?            @unique
+  plan                  SubscriptionPlan
+  status                SubscriptionStatus @default(TRIALING)
+  priceAmount           Decimal            @db.Decimal(12, 2)
+  currencyCode          String             @default("USD")
+  trialEndsAt           DateTime?
+  currentPeriodEnd      DateTime?
+  activatedAt           DateTime?
+  canceledAt            DateTime?
+  metadata              Json               @default("{}")
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+
+  merchant Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+
+  @@index([merchantId, status])
+  @@index([plan])
+}
+
+model AIInsight {
+  id          String          @id @default(cuid())
+  merchantId  String
+  videoId     String?
+  type        AIInsightType
+  status      AIInsightStatus @default(QUEUED)
+  title       String
+  body        String?
+  score       Float?
+  payload     Json            @default("{}")
+  generatedBy String?
+  error       String?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  merchant Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  video    Video?   @relation(fields: [videoId], references: [id], onDelete: SetNull)
+
+  @@index([merchantId, type, createdAt])
+  @@index([videoId, type])
+}

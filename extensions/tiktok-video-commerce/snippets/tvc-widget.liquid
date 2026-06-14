@@ -1,0 +1,23 @@
+{{ 'tvc-widget.css' | asset_url | stylesheet_tag }}
+
+{%- assign widget_token = block.settings.widget_token | strip -%}
+{%- assign endpoint = block.settings.api_path | default: '/apps/tvc/widgets' -%}
+{%- assign analytics_endpoint = block.settings.analytics_path | default: '/apps/tvc/analytics' -%}
+
+<div
+  class="tvc-widget-root"
+  data-tvc-widget="{{ widget_token | escape }}"
+  data-tvc-mode="{{ mode | escape }}"
+  data-tvc-endpoint="{{ endpoint | escape }}"
+  data-tvc-analytics="{{ analytics_endpoint | escape }}"
+  data-tvc-title="{{ block.settings.heading | escape }}"
+  data-tvc-theme="{{ block.settings.theme }}"
+  data-tvc-layout="{{ block.settings.layout }}"
+  data-tvc-section-id="{{ block.id }}"
+>
+  <div class="tvc-widget-shell" style="--tvc-widget-ratio: {{ block.settings.aspect_ratio | default: '9 / 16' }};">
+    <div class="tvc-widget-skeleton"></div>
+  </div>
+</div>
+
+<script src="{{ 'tvc-widget.js' | asset_url }}" defer></script>
