@@ -1,7 +1,7 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "078d898b50d1d4f076a329449917dc63"
-application_url = "https://example.com"
+application_url = "https://tiktok-ugc-video-commerce.vercel.app"
 embedded = true
 name = "Tiktok Video Commerce"
 
@@ -33,12 +33,16 @@ api_version = "2025-10"
   compliance_topics = [ "shop/redact" ]
 
 [app_proxy]
-url = "https://example.com/apps/tvc"
+url = "https://tiktok-ugc-video-commerce.vercel.app/apps/tvc"
 prefix = "apps"
 subpath = "tvc"
 
 [auth]
-redirect_urls = [ "https://example.com/api/auth" ]
+redirect_urls = [
+  "https://tiktok-ugc-video-commerce.vercel.app/auth/callback",
+  "https://tiktok-ugc-video-commerce.vercel.app/auth/shopify/callback",
+  "https://tiktok-ugc-video-commerce.vercel.app/api/auth/callback"
+]
 
 [build]
 include_config_on_deploy = true
