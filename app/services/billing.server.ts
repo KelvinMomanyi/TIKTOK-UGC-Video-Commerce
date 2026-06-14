@@ -4,7 +4,7 @@ import {
   type ShopifyBillingPlanName,
   PLAN_DETAILS,
   SHOPIFY_BILLING_PLANS,
-} from "../config/billing.server";
+} from "../config/billing";
 import { listSubscriptions, upsertSubscriptionByShopifyId } from "../repositories/subscription.repository.server";
 import { updateMerchant } from "../repositories/merchant.repository.server";
 

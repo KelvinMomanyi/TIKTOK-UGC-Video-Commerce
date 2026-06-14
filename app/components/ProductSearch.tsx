@@ -23,7 +23,7 @@ export function ProductSearch({
     }, 250);
 
     return () => window.clearTimeout(timeout);
-  }, [query]);
+  }, [fetcher, query]);
 
   return (
     <div className="tvc-stack">

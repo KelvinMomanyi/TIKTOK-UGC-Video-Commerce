@@ -1,5 +1,5 @@
 import type { Merchant, Prisma, WidgetType } from "@prisma/client";
-import { PLAN_LIMITS } from "../config/billing.server";
+import { PLAN_LIMITS } from "../config/billing";
 import {
   attachVideoToWidget,
   countWidgets,

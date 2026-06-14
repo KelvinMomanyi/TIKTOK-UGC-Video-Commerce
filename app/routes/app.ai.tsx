@@ -7,7 +7,7 @@ import { generateVideoInsights, insightsForMerchant } from "../services/ai.serve
 import { ensureMerchant } from "../services/merchant.server";
 import { getVideosPage, getVideoForMerchant } from "../services/video.server";
 import { badRequest } from "../utils/http.server";
-import { stringValue } from "../utils/validation.server";
+import { stringValue } from "../utils/validation";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { admin, session } = await authenticate.admin(request);

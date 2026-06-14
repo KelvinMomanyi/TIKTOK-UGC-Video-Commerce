@@ -14,7 +14,7 @@ import {
   markVideoArchived,
 } from "../services/video.server";
 import { badRequest, ok } from "../utils/http.server";
-import { numberValue, stringValue } from "../utils/validation.server";
+import { numberValue, stringValue } from "../utils/validation";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { admin, session } = await authenticate.admin(request);

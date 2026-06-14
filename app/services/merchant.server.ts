@@ -1,5 +1,4 @@
-import type { Prisma } from "@prisma/client";
-import type { Merchant } from "@prisma/client";
+import type { Merchant, Prisma } from "@prisma/client";
 import {
   findMerchantByPublicToken,
   findMerchantByShop,

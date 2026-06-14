@@ -2,7 +2,7 @@ import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { Form, Link, redirect, useLoaderData, useNavigation } from "react-router";
 import type { WidgetType } from "@prisma/client";
 import { authenticate } from "../shopify.server";
-import { PLAN_LIMITS } from "../config/billing.server";
+import { PLAN_LIMITS } from "../config/billing";
 import { EmptyState } from "../components/ui/EmptyState";
 import { KpiCard } from "../components/ui/KpiCard";
 import { PageHeader } from "../components/ui/PageHeader";
@@ -15,7 +15,7 @@ import {
   getWidgetsPage,
 } from "../services/widget.server";
 import { badRequest } from "../utils/http.server";
-import { optionalStringValue, stringValue } from "../utils/validation.server";
+import { optionalStringValue, stringValue } from "../utils/validation";
 
 const WIDGET_TYPES: Array<{ value: WidgetType; label: string }> = [
   { value: "HOME_FEED", label: "Homepage video feed" },

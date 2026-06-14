@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, type KeyboardEvent, type MouseEvent } from "react";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { Form, Link, redirect, useLoaderData, useNavigation } from "react-router";
 import { authenticate } from "../shopify.server";
@@ -21,7 +21,7 @@ import {
   numberValue,
   optionalStringValue,
   stringValue,
-} from "../utils/validation.server";
+} from "../utils/validation";
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const { admin, session } = await authenticate.admin(request);
@@ -151,6 +151,21 @@ export default function VideoDetailPage() {
     return <div className="tvc-video-thumb__fallback">Preview unavailable</div>;
   }, [video.thumbnailUrl, video.playbackUrl]);
 
+  function setHotspotFromPointer(event: MouseEvent<HTMLDivElement>) {
+    const rect = event.currentTarget.getBoundingClientRect();
+    setHotspot({
+      x: clampPercent(((event.clientX - rect.left) / rect.width) * 100),
+      y: clampPercent(((event.clientY - rect.top) / rect.height) * 100),
+    });
+  }
+
+  function setHotspotFromKeyboard(event: KeyboardEvent<HTMLDivElement>) {
+    if (event.key !== "Enter" && event.key !== " ") return;
+
+    event.preventDefault();
+    setHotspot({ x: 50, y: 50 });
+  }
+
   return (
     <s-page>
       <div className="tvc-page">
@@ -186,13 +201,9 @@ export default function VideoDetailPage() {
                 className="tvc-hotspot-stage"
                 role="button"
                 tabIndex={0}
-                onClick={(event) => {
-                  const rect = event.currentTarget.getBoundingClientRect();
-                  setHotspot({
-                    x: clampPercent(((event.clientX - rect.left) / rect.width) * 100),
-                    y: clampPercent(((event.clientY - rect.top) / rect.height) * 100),
-                  });
-                }}
+                aria-label="Set the next hotspot position"
+                onClick={setHotspotFromPointer}
+                onKeyDown={setHotspotFromKeyboard}
               >
                 {preview}
                 {video.productTags.map((tag) => (

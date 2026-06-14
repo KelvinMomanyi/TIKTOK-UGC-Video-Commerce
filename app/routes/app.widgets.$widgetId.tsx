@@ -18,7 +18,7 @@ import {
   numberValue,
   optionalStringValue,
   stringValue,
-} from "../utils/validation.server";
+} from "../utils/validation";
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const { admin, session } = await authenticate.admin(request);

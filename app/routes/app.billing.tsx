@@ -6,14 +6,14 @@ import {
   PLAN_DETAILS,
   SHOPIFY_BILLING_PLANS,
   type ShopifyBillingPlanName,
-} from "../config/billing.server";
+} from "../config/billing";
 import { appUrl, env } from "../config/env.server";
 import { PageHeader } from "../components/ui/PageHeader";
 import { StatusBadge } from "../components/ui/StatusBadge";
 import { subscriptionsForMerchant, syncActiveBilling } from "../services/billing.server";
 import { ensureMerchant } from "../services/merchant.server";
 import { badRequest } from "../utils/http.server";
-import { stringValue } from "../utils/validation.server";
+import { stringValue } from "../utils/validation";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { admin, billing, session } = await authenticate.admin(request);

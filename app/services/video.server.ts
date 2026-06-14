@@ -1,5 +1,5 @@
 import type { Merchant, Prisma } from "@prisma/client";
-import { PLAN_LIMITS } from "../config/billing.server";
+import { PLAN_LIMITS } from "../config/billing";
 import {
   addProductTag,
   countVideos,
@@ -13,7 +13,7 @@ import {
   updateVideo,
   videosByStatus,
 } from "../repositories/video.repository.server";
-import { clampPercent, isTikTokUrl } from "../utils/validation.server";
+import { clampPercent, isTikTokUrl } from "../utils/validation";
 import { videoProviderClient, type DirectUploadRequest } from "./video/providers.server";
 
 export async function getVideosPage(merchant: Merchant) {

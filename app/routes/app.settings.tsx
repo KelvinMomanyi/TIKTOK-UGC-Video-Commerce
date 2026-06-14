@@ -4,7 +4,7 @@ import { authenticate } from "../shopify.server";
 import { PageHeader } from "../components/ui/PageHeader";
 import { ensureMerchant, updateMerchantSettings } from "../services/merchant.server";
 import { badRequest } from "../utils/http.server";
-import { booleanValue, optionalStringValue, stringValue } from "../utils/validation.server";
+import { booleanValue, optionalStringValue, stringValue } from "../utils/validation";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { admin, session } = await authenticate.admin(request);

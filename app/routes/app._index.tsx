@@ -6,7 +6,7 @@ import type {
 import { Form, Link, redirect, useLoaderData } from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { authenticate } from "../shopify.server";
-import { PLAN_LIMITS } from "../config/billing.server";
+import { PLAN_LIMITS } from "../config/billing";
 import { EmptyState } from "../components/ui/EmptyState";
 import { KpiCard } from "../components/ui/KpiCard";
 import { PageHeader } from "../components/ui/PageHeader";
