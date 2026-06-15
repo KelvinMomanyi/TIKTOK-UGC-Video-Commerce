@@ -27,7 +27,9 @@ export async function createMerchantWidget(merchant: Merchant, input: { name: st
     name: input.name,
     title: input.title,
     type: input.type,
+    status: "PUBLISHED",
     settings: defaultWidgetSettings(input.type),
+    publishedAt: new Date(),
   });
 }
 
@@ -60,6 +62,17 @@ export function updateMerchantWidget(
 
 export function archiveMerchantWidget(merchant: Merchant, widgetId: string) {
   return softDeleteWidget(merchant.id, widgetId);
+}
+
+export function updateMerchantWidgetStatus(
+  merchant: Merchant,
+  widgetId: string,
+  status: "DRAFT" | "PUBLISHED" | "PAUSED",
+) {
+  return updateWidget(merchant.id, widgetId, {
+    status,
+    publishedAt: status === "PUBLISHED" ? new Date() : undefined,
+  });
 }
 
 export async function connectVideoToWidget(merchant: Merchant, widgetId: string, videoId: string, sortOrder: number) {
