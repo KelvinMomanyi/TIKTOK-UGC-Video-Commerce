@@ -59,13 +59,14 @@
     });
 
     if (!response.ok) {
-      root.innerHTML = "";
+      renderSetupState(root, "Widget token is not published or the app proxy is not connected.");
       return;
     }
 
     const payload = await response.json();
-    render(root, payload);
-    postEvent(root, { type: "IMPRESSION" });
+    if (render(root, payload)) {
+      postEvent(root, { type: "IMPRESSION" });
+    }
   };
 
   const render = (root, payload) => {
@@ -79,6 +80,15 @@
       ${title ? `<h2 class="tvc-widget-heading">${escapeHtml(title)}</h2>` : ""}
       <div class="${listClass}"></div>
     `;
+
+    if (videos.length === 0) {
+      const attachedVideos = Number(payload.diagnostics?.attachedVideos || 0);
+      const message = attachedVideos > 0
+        ? "Attached videos are not ready yet. Use READY videos in this widget."
+        : "No videos are attached to this widget yet.";
+      renderSetupState(root, message, title);
+      return false;
+    }
 
     const list = root.querySelector(`.${listClass}`);
     videos.slice(0, maxVideos).forEach((video) => {
@@ -95,6 +105,19 @@
         });
       });
     });
+    return true;
+  };
+
+  const renderSetupState = (root, message, title = root.dataset.tvcTitle) => {
+    if (!window.Shopify?.designMode) {
+      root.innerHTML = "";
+      return;
+    }
+
+    root.innerHTML = `
+      ${title ? `<h2 class="tvc-widget-heading">${escapeHtml(title)}</h2>` : ""}
+      <div class="tvc-widget-empty">${escapeHtml(message)}</div>
+    `;
   };
 
   const videoCard = (root, video, settings) => {

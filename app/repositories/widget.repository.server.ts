@@ -47,12 +47,6 @@ export function findPublishedWidgetByToken(publicToken: string) {
     include: {
       merchant: true,
       widgetVideos: {
-        where: {
-          video: {
-            deletedAt: null,
-            status: "READY",
-          },
-        },
         include: {
           video: {
             include: {

@@ -152,53 +152,63 @@ export default function WidgetsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {widgets.map((widget) => (
-                    <tr key={widget.id}>
-                      <td>
-                        <Link to={`/app/widgets/${widget.id}`}>{widget.name}</Link>
-                        {widget.title ? <div className="tvc-muted">{widget.title}</div> : null}
-                      </td>
-                      <td>{widget.type.replace(/_/g, " ").toLowerCase()}</td>
-                      <td><StatusBadge status={widget.status} /></td>
-                      <td>{widget.widgetVideos.length}</td>
-                      <td>
-                        <div className="tvc-token-cell">
-                          <input
-                            className="tvc-input tvc-token-input"
-                            value={widget.publicToken}
-                            readOnly
-                            aria-label={`Widget token for ${widget.name}`}
-                            onFocus={(event) => event.currentTarget.select()}
-                          />
-                          <code className="tvc-token-snippet">{`<div data-tvc-widget="${widget.publicToken}"></div>`}</code>
-                        </div>
-                      </td>
-                      <td>
-                        <div className="tvc-actions">
-                          {widget.status === "PUBLISHED" ? (
-                            <Form method="post">
-                              <input type="hidden" name="intent" value="set_widget_status" />
-                              <input type="hidden" name="widgetId" value={widget.id} />
-                              <input type="hidden" name="status" value="PAUSED" />
-                              <s-button type="submit" disabled={busy}>Pause</s-button>
-                            </Form>
-                          ) : (
-                            <Form method="post">
-                              <input type="hidden" name="intent" value="set_widget_status" />
-                              <input type="hidden" name="widgetId" value={widget.id} />
-                              <input type="hidden" name="status" value="PUBLISHED" />
-                              <s-button variant="primary" type="submit" disabled={busy}>Publish</s-button>
-                            </Form>
-                          )}
-                          <Form method="post">
-                            <input type="hidden" name="intent" value="archive_widget" />
-                            <input type="hidden" name="widgetId" value={widget.id} />
-                            <s-button type="submit" disabled={busy}>Archive</s-button>
-                          </Form>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                  {widgets.map((widget) => {
+                    const readyWidgetVideos = widget.widgetVideos.filter((entry) => entry.video.status === "READY" && !entry.video.deletedAt);
+
+                    return (
+                      <tr key={widget.id}>
+                          <td>
+                            <Link to={`/app/widgets/${widget.id}`}>{widget.name}</Link>
+                            {widget.title ? <div className="tvc-muted">{widget.title}</div> : null}
+                          </td>
+                          <td>{widget.type.replace(/_/g, " ").toLowerCase()}</td>
+                          <td><StatusBadge status={widget.status} /></td>
+                          <td>
+                            <strong>{readyWidgetVideos.length}</strong>
+                            <span className="tvc-muted"> / {widget.widgetVideos.length} ready</span>
+                            {readyWidgetVideos.length === 0 ? (
+                              <div className="tvc-muted">Attach a READY video before using this token.</div>
+                            ) : null}
+                          </td>
+                          <td>
+                            <div className="tvc-token-cell">
+                              <input
+                                className="tvc-input tvc-token-input"
+                                value={widget.publicToken}
+                                readOnly
+                                aria-label={`Widget token for ${widget.name}`}
+                                onFocus={(event) => event.currentTarget.select()}
+                              />
+                              <code className="tvc-token-snippet">{`<div data-tvc-widget="${widget.publicToken}"></div>`}</code>
+                            </div>
+                          </td>
+                          <td>
+                            <div className="tvc-actions">
+                              {widget.status === "PUBLISHED" ? (
+                                <Form method="post">
+                                  <input type="hidden" name="intent" value="set_widget_status" />
+                                  <input type="hidden" name="widgetId" value={widget.id} />
+                                  <input type="hidden" name="status" value="PAUSED" />
+                                  <s-button type="submit" disabled={busy}>Pause</s-button>
+                                </Form>
+                              ) : (
+                                <Form method="post">
+                                  <input type="hidden" name="intent" value="set_widget_status" />
+                                  <input type="hidden" name="widgetId" value={widget.id} />
+                                  <input type="hidden" name="status" value="PUBLISHED" />
+                                  <s-button variant="primary" type="submit" disabled={busy}>Publish</s-button>
+                                </Form>
+                              )}
+                              <Form method="post">
+                                <input type="hidden" name="intent" value="archive_widget" />
+                                <input type="hidden" name="widgetId" value={widget.id} />
+                                <s-button type="submit" disabled={busy}>Archive</s-button>
+                              </Form>
+                            </div>
+                          </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             ) : (

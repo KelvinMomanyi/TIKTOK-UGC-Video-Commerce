@@ -37,4 +37,8 @@ export type StorefrontWidgetPayload = {
     settings: Record<string, unknown>;
   };
   videos: StorefrontVideo[];
+  diagnostics?: {
+    attachedVideos: number;
+    readyVideos: number;
+  };
 };

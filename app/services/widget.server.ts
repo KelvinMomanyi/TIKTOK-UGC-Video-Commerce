@@ -120,6 +120,10 @@ export async function publicWidgetPayload(publicToken: string): Promise<Storefro
     throw new Response("Widget not found", { status: 404 });
   }
 
+  const readyVideos = widget.widgetVideos.filter(({ video }) => (
+    !video.deletedAt && video.status === "READY"
+  ));
+
   return {
     widget: {
       id: widget.id,
@@ -130,7 +134,7 @@ export async function publicWidgetPayload(publicToken: string): Promise<Storefro
       layout: widget.layout,
       settings: jsonObject(widget.settings),
     },
-    videos: widget.widgetVideos.map(({ video }) => ({
+    videos: readyVideos.map(({ video }) => ({
       id: video.id,
       title: video.title,
       caption: video.caption ?? undefined,
@@ -155,6 +159,10 @@ export async function publicWidgetPayload(publicToken: string): Promise<Storefro
         clickUrl: tag.clickUrl ?? undefined,
       })),
     })),
+    diagnostics: {
+      attachedVideos: widget.widgetVideos.length,
+      readyVideos: readyVideos.length,
+    },
   };
 }
 

@@ -122,6 +122,16 @@
   text-decoration: none;
 }
 
+.tvc-widget-empty {
+  border: 1px dashed var(--tvc-border);
+  border-radius: 8px;
+  background: var(--tvc-bg);
+  color: var(--tvc-muted);
+  font-size: 14px;
+  line-height: 1.45;
+  padding: 18px;
+}
+
 .tvc-widget-root[data-tvc-mode="floating_stories"] {
   position: fixed;
   right: 16px;
