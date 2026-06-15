@@ -1,6 +1,7 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { Form, Link, redirect, useLoaderData, useNavigation } from "react-router";
 import type { WidgetType } from "@prisma/client";
+import { CopyField } from "../components/CopyField";
 import { authenticate } from "../shopify.server";
 import { PLAN_LIMITS } from "../config/billing";
 import { EmptyState } from "../components/ui/EmptyState";
@@ -172,14 +173,8 @@ export default function WidgetsPage() {
                           </td>
                           <td>
                             <div className="tvc-token-cell">
-                              <input
-                                className="tvc-input tvc-token-input"
-                                value={widget.publicToken}
-                                readOnly
-                                aria-label={`Widget token for ${widget.name}`}
-                                onFocus={(event) => event.currentTarget.select()}
-                              />
-                              <code className="tvc-token-snippet">{`<div data-tvc-widget="${widget.publicToken}"></div>`}</code>
+                              <CopyField label="Token" value={widget.publicToken} />
+                              <CopyField label="Theme snippet" value={`<div data-tvc-widget="${widget.publicToken}"></div>`} multiline />
                             </div>
                           </td>
                           <td>

@@ -108,6 +108,18 @@ export default function VideosPage() {
           <KpiCard label="Total videos" value={videos.length} meta="Active library items" />
         </div>
 
+        <section className="tvc-card">
+          <div className="tvc-card__body tvc-stack">
+            <h2 style={{ margin: 0 }}>Fast setup path</h2>
+            <div className="tvc-steps">
+              <span>Import a TikTok URL</span>
+              <span>Open the video and tag a product</span>
+              <span>Create a widget and attach the READY video</span>
+              <span>Paste the widget token in the theme editor</span>
+            </div>
+          </div>
+        </section>
+
         <div className="tvc-grid tvc-grid--2">
           <section className="tvc-card">
             <div className="tvc-card__body tvc-stack">

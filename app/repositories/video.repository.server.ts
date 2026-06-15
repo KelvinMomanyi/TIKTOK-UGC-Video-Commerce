@@ -49,6 +49,13 @@ export function updateVideo(merchantId: string, id: string, data: Prisma.VideoUp
   });
 }
 
+export function updateVideoById(id: string, data: Prisma.VideoUpdateInput) {
+  return prisma.video.update({
+    where: { id },
+    data,
+  });
+}
+
 export function softDeleteVideo(merchantId: string, id: string) {
   return prisma.video.updateMany({
     where: { id, merchantId },

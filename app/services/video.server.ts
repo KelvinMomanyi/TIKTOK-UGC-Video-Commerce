@@ -9,6 +9,7 @@ import {
   listReadyVideos,
   listVideos,
   softDeleteVideo,
+  updateVideoById,
   updateProductTag,
   updateVideo,
   videosByStatus,
@@ -97,6 +98,36 @@ export function markVideoArchived(merchant: Merchant, videoId: string) {
 
 export function updateVideoDetails(merchant: Merchant, videoId: string, data: { title: string; caption?: string; thumbnailUrl?: string }) {
   return updateVideo(merchant.id, videoId, data);
+}
+
+export async function markVideoReady(
+  merchant: Merchant,
+  videoId: string,
+  input: {
+    playbackUrl?: string;
+    thumbnailUrl?: string;
+    providerPlaybackId?: string;
+    aspectRatio?: string;
+  },
+) {
+  const video = await getVideoForMerchant(merchant, videoId);
+  const playbackUrl = input.playbackUrl ?? video.playbackUrl;
+
+  if (!playbackUrl) {
+    throw new Response("Add a playback URL before marking this video ready.", {
+      status: 400,
+    });
+  }
+
+  return updateVideoById(video.id, {
+    status: "READY",
+    playbackUrl,
+    thumbnailUrl: input.thumbnailUrl ?? video.thumbnailUrl,
+    providerPlaybackId: input.providerPlaybackId ?? video.providerPlaybackId,
+    aspectRatio: input.aspectRatio ?? video.aspectRatio ?? "9:16",
+    publishedAt: video.publishedAt ?? new Date(),
+    failureReason: null,
+  });
 }
 
 export function createVideoTag(

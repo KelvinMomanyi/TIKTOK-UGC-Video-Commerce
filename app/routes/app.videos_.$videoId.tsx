@@ -10,6 +10,7 @@ import {
   createVideoTag,
   editVideoTag,
   getVideoForMerchant,
+  markVideoReady,
   markVideoArchived,
   removeVideoTag,
   updateVideoDetails,
@@ -84,6 +85,16 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       title: stringValue(formData, "title"),
       caption: optionalStringValue(formData, "caption"),
       thumbnailUrl: optionalStringValue(formData, "thumbnailUrl"),
+    });
+    return redirect(`/app/videos/${videoId}`);
+  }
+
+  if (intent === "mark_ready") {
+    await markVideoReady(merchant, videoId, {
+      playbackUrl: optionalStringValue(formData, "playbackUrl"),
+      thumbnailUrl: optionalStringValue(formData, "thumbnailUrl"),
+      providerPlaybackId: optionalStringValue(formData, "providerPlaybackId"),
+      aspectRatio: optionalStringValue(formData, "aspectRatio"),
     });
     return redirect(`/app/videos/${videoId}`);
   }
@@ -237,6 +248,45 @@ export default function VideoDetailPage() {
                 </Form>
               </div>
             </section>
+
+            {video.status !== "READY" ? (
+              <section className="tvc-card">
+                <div className="tvc-card__body tvc-stack">
+                  <h2 style={{ margin: 0 }}>Finish upload setup</h2>
+                  <div className="tvc-callout tvc-callout--warning">
+                    This video is not available for widgets until it has a playback URL and status READY.
+                  </div>
+                  <Form method="post" className="tvc-stack">
+                    <input type="hidden" name="intent" value="mark_ready" />
+                    <label className="tvc-label">
+                      Playback URL
+                      <input
+                        className="tvc-input"
+                        name="playbackUrl"
+                        defaultValue={video.playbackUrl ?? ""}
+                        placeholder="https://stream.mux.com/...m3u8 or hosted MP4 URL"
+                        required={!video.playbackUrl}
+                      />
+                    </label>
+                    <label className="tvc-label">
+                      Thumbnail URL
+                      <input className="tvc-input" name="thumbnailUrl" defaultValue={video.thumbnailUrl ?? ""} />
+                    </label>
+                    <div className="tvc-form-grid">
+                      <label className="tvc-label">
+                        Provider playback ID
+                        <input className="tvc-input" name="providerPlaybackId" />
+                      </label>
+                      <label className="tvc-label">
+                        Aspect ratio
+                        <input className="tvc-input" name="aspectRatio" defaultValue="9:16" />
+                      </label>
+                    </div>
+                    <s-button variant="primary" type="submit" disabled={busy}>Mark ready</s-button>
+                  </Form>
+                </div>
+              </section>
+            ) : null}
 
             <section className="tvc-card">
               <div className="tvc-card__body tvc-stack">

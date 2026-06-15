@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useFetcher } from "react-router";
+import { Link, useFetcher } from "react-router";
 
 type UploadActionResponse = {
   ok?: boolean;
@@ -102,6 +102,18 @@ export function UploadPanel() {
         <div className="tvc-stack">
           <progress value={progress} max={100} />
           <span className="tvc-muted">{progress}% uploaded</span>
+        </div>
+      ) : null}
+      {progress === 100 ? (
+        <div className="tvc-callout tvc-callout--warning tvc-row">
+          <span>
+            Upload complete. Finish the video setup so it can be attached to a widget.
+          </span>
+          {fetcher.data?.video?.id ? (
+            <Link to={`/app/videos/${fetcher.data.video.id}`}>
+              <s-button>Finish setup</s-button>
+            </Link>
+          ) : null}
         </div>
       ) : null}
       {error || fetcher.data?.message ? (

@@ -1,5 +1,6 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { Form, Link, redirect, useLoaderData, useNavigation } from "react-router";
+import { CopyField } from "../components/CopyField";
 import { authenticate } from "../shopify.server";
 import { PageHeader } from "../components/ui/PageHeader";
 import { StatusBadge } from "../components/ui/StatusBadge";
@@ -219,8 +220,8 @@ export default function WidgetDetailPage() {
               <p className="tvc-subtitle">
                 Add the TikTok Video Commerce block in the theme editor and paste this widget token.
               </p>
-              <pre className="tvc-code">{widget.publicToken}</pre>
-              <pre className="tvc-code">{`<div data-tvc-widget="${widget.publicToken}"></div>`}</pre>
+              <CopyField label="Widget token" value={widget.publicToken} />
+              <CopyField label="Theme snippet" value={`<div data-tvc-widget="${widget.publicToken}"></div>`} multiline />
               <p className="tvc-subtitle">
                 Storefront API path: <code>{`/apps/tvc/widgets/${widget.publicToken}`}</code>
               </p>
@@ -232,6 +233,11 @@ export default function WidgetDetailPage() {
           <section className="tvc-card">
             <div className="tvc-card__body tvc-stack">
               <h2 style={{ margin: 0 }}>Attach video</h2>
+              {readyVideos.length === 0 ? (
+                <div className="tvc-callout tvc-callout--warning">
+                  No READY videos are available. Import a TikTok video, or finish an uploaded video from its detail page before attaching it here.
+                </div>
+              ) : null}
               <Form method="post" className="tvc-form-grid">
                 <input type="hidden" name="intent" value="attach_video" />
                 <label className="tvc-label">
