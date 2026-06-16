@@ -25,6 +25,28 @@ export function videoProviderClient(): VideoProviderClient {
   return env.videoProvider === "cloudflare" ? new CloudflareStreamProvider() : new MuxProvider();
 }
 
+export function videoProviderSetupError() {
+  if (env.videoProvider === "cloudflare") {
+    const missing = [
+      env.cloudflareAccountId ? undefined : "CLOUDFLARE_ACCOUNT_ID",
+      env.cloudflareStreamToken ? undefined : "CLOUDFLARE_STREAM_TOKEN",
+    ].filter(Boolean);
+
+    return missing.length
+      ? `Cloudflare Stream uploads are not configured. Add ${missing.join(" and ")} in Vercel, then redeploy.`
+      : undefined;
+  }
+
+  const missing = [
+    env.muxTokenId ? undefined : "MUX_TOKEN_ID",
+    env.muxTokenSecret ? undefined : "MUX_TOKEN_SECRET",
+  ].filter(Boolean);
+
+  return missing.length
+    ? `Mux uploads are not configured. Add ${missing.join(" and ")} in Vercel, then redeploy.`
+    : undefined;
+}
+
 class MuxProvider implements VideoProviderClient {
   async createDirectUpload() {
     const tokenId = requireEnv("muxTokenId");
@@ -46,7 +68,7 @@ class MuxProvider implements VideoProviderClient {
     });
 
     if (!response.ok) {
-      throw new Error(`Mux direct upload failed: ${response.status}`);
+      throw new Error(`Mux direct upload failed (${response.status}). Check MUX_TOKEN_ID and MUX_TOKEN_SECRET in Vercel.`);
     }
 
     const json = (await response.json()) as { data: { id: string; url: string } };
@@ -92,7 +114,7 @@ class CloudflareStreamProvider implements VideoProviderClient {
     );
 
     if (!response.ok) {
-      throw new Error(`Cloudflare Stream direct upload failed: ${response.status}`);
+      throw new Error(`Cloudflare Stream direct upload failed (${response.status}). Check CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_STREAM_TOKEN in Vercel.`);
     }
 
     const json = (await response.json()) as {

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type MouseEve
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { Form, Link, redirect, useLoaderData, useNavigation } from "react-router";
 import { authenticate } from "../shopify.server";
+import { HlsVideo } from "../components/HlsVideo";
 import { ProductSearch } from "../components/ProductSearch";
 import { PageHeader } from "../components/ui/PageHeader";
 import { StatusBadge } from "../components/ui/StatusBadge";
@@ -23,6 +24,14 @@ import {
   optionalStringValue,
   stringValue,
 } from "../utils/validation";
+
+type TikTokEmbedWindow = Window & {
+  tiktokEmbed?: {
+    lib?: {
+      render(): void;
+    };
+  };
+};
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const { admin, session } = await authenticate.admin(request);
@@ -172,8 +181,15 @@ export default function VideoDetailPage() {
       script.src = "https://www.tiktok.com/embed.js";
       script.async = true;
       document.body.appendChild(script);
-    } else if ((window as any).tiktokEmbed?.lib) {
-      try { (window as any).tiktokEmbed.lib.render(); } catch (_) {}
+    } else {
+      const tiktokEmbed = (window as TikTokEmbedWindow).tiktokEmbed;
+      if (tiktokEmbed?.lib) {
+        try {
+          tiktokEmbed.lib.render();
+        } catch {
+          // The TikTok script can be present before its renderer is ready.
+        }
+      }
     }
   }, [isTikTok, video.embedHtml, video.originalUrl]);
 
@@ -208,7 +224,7 @@ export default function VideoDetailPage() {
 
     if (video.playbackUrl && !isTikTok) {
       return (
-        <video
+        <HlsVideo
           src={video.playbackUrl}
           poster={video.thumbnailUrl ?? undefined}
           controls
@@ -304,7 +320,7 @@ export default function VideoDetailPage() {
                   </label>
                   <label className="tvc-label">
                     Thumbnail URL
-                    <input className="tvc-input" name="thumbnailUrl" defaultValue={video.thumbnailUrl ?? ""} />
+                    <input className="tvc-input" name="thumbnailUrl" type="url" defaultValue={video.thumbnailUrl ?? ""} />
                   </label>
                   <s-button type="submit" disabled={busy}>Save details</s-button>
                 </Form>
@@ -325,6 +341,7 @@ export default function VideoDetailPage() {
                       <input
                         className="tvc-input"
                         name="playbackUrl"
+                        type="url"
                         defaultValue={video.playbackUrl ?? ""}
                         placeholder="https://stream.mux.com/...m3u8 or hosted MP4 URL"
                         required={!video.playbackUrl}
@@ -332,7 +349,7 @@ export default function VideoDetailPage() {
                     </label>
                     <label className="tvc-label">
                       Thumbnail URL
-                      <input className="tvc-input" name="thumbnailUrl" defaultValue={video.thumbnailUrl ?? ""} />
+                      <input className="tvc-input" name="thumbnailUrl" type="url" defaultValue={video.thumbnailUrl ?? ""} />
                     </label>
                     <div className="tvc-form-grid">
                       <label className="tvc-label">

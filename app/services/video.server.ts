@@ -14,8 +14,12 @@ import {
   updateVideo,
   videosByStatus,
 } from "../repositories/video.repository.server";
-import { clampPercent, isTikTokUrl } from "../utils/validation";
-import { videoProviderClient, type DirectUploadRequest } from "./video/providers.server";
+import { clampPercent, isHttpUrl, isTikTokUrl } from "../utils/validation";
+import {
+  videoProviderClient,
+  videoProviderSetupError,
+  type DirectUploadRequest,
+} from "./video/providers.server";
 
 export async function getVideosPage(merchant: Merchant) {
   const [videos, statusGroups] = await Promise.all([
@@ -67,8 +71,51 @@ export async function createTikTokImport(merchant: Merchant, url: string) {
   });
 }
 
+export async function createExternalVideo(
+  merchant: Merchant,
+  input: {
+    title: string;
+    playbackUrl: string;
+    caption?: string;
+    thumbnailUrl?: string;
+    aspectRatio?: string;
+  },
+) {
+  if (!isHttpUrl(input.playbackUrl)) {
+    throw new Response("Enter a valid hosted video URL.", { status: 400 });
+  }
+
+  if (input.thumbnailUrl && !isHttpUrl(input.thumbnailUrl)) {
+    throw new Response("Enter a valid thumbnail URL, or leave it blank.", { status: 400 });
+  }
+
+  await assertVideoLimit(merchant);
+
+  return createVideo({
+    merchantId: merchant.id,
+    source: "EXTERNAL",
+    provider: "EXTERNAL",
+    status: "READY",
+    title: input.title || "Hosted video",
+    caption: input.caption,
+    originalUrl: input.playbackUrl,
+    playbackUrl: input.playbackUrl,
+    thumbnailUrl: input.thumbnailUrl,
+    aspectRatio: input.aspectRatio || "9:16",
+    metadata: {
+      provider: "external_url",
+    },
+    publishedAt: new Date(),
+  });
+}
+
 export async function createDirectUpload(merchant: Merchant, input: DirectUploadRequest & { title: string }) {
   await assertVideoLimit(merchant);
+  const setupError = videoProviderSetupError();
+  if (setupError) {
+    throw new Error(setupError);
+  }
+
   const provider = videoProviderClient();
   const upload = await provider.createDirectUpload(input);
 
@@ -111,7 +158,11 @@ export async function markVideoReady(
   },
 ) {
   const video = await getVideoForMerchant(merchant, videoId);
-  const playbackUrl = input.playbackUrl ?? video.playbackUrl;
+  const provider = videoProviderClient();
+  const providerPlaybackId = input.providerPlaybackId ?? video.providerPlaybackId ?? undefined;
+  const playbackUrl = input.playbackUrl ?? video.playbackUrl ?? (
+    providerPlaybackId ? provider.playbackUrl(providerPlaybackId) : undefined
+  );
 
   if (!playbackUrl) {
     throw new Response("Add a playback URL before marking this video ready.", {
@@ -119,11 +170,23 @@ export async function markVideoReady(
     });
   }
 
+  if (!isHttpUrl(playbackUrl)) {
+    throw new Response("Enter a valid playback URL.", { status: 400 });
+  }
+
+  const thumbnailUrl = input.thumbnailUrl ?? video.thumbnailUrl ?? (
+    providerPlaybackId ? provider.thumbnailUrl(providerPlaybackId) : undefined
+  );
+
+  if (thumbnailUrl && !isHttpUrl(thumbnailUrl)) {
+    throw new Response("Enter a valid thumbnail URL, or leave it blank.", { status: 400 });
+  }
+
   return updateVideoById(video.id, {
     status: "READY",
     playbackUrl,
-    thumbnailUrl: input.thumbnailUrl ?? video.thumbnailUrl,
-    providerPlaybackId: input.providerPlaybackId ?? video.providerPlaybackId,
+    thumbnailUrl,
+    providerPlaybackId,
     aspectRatio: input.aspectRatio ?? video.aspectRatio ?? "9:16",
     publishedAt: video.publishedAt ?? new Date(),
     failureReason: null,

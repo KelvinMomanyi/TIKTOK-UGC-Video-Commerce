@@ -1,5 +1,7 @@
 (() => {
   const loaded = new WeakSet();
+  const HLS_SCRIPT_SRC = "https://cdn.jsdelivr.net/npm/hls.js@1/dist/hls.min.js";
+  let hlsLoader;
 
   const visitorId = () => {
     const key = "tvc_visitor_id";
@@ -144,7 +146,11 @@
           script.async = true;
           document.body.appendChild(script);
         } else if (window.tiktokEmbed && typeof window.tiktokEmbed.lib === "object") {
-          try { window.tiktokEmbed.lib.render(); } catch (_) {}
+          try {
+            window.tiktokEmbed.lib.render();
+          } catch (_) {
+            // The TikTok script can be present before its renderer is ready.
+          }
         }
       });
     } else if (isTikTok && video.playbackUrl) {
@@ -168,7 +174,11 @@
             script.async = true;
             document.body.appendChild(script);
           } else if (window.tiktokEmbed && typeof window.tiktokEmbed.lib === "object") {
-            try { window.tiktokEmbed.lib.render(); } catch (_) {}
+            try {
+              window.tiktokEmbed.lib.render();
+            } catch (_) {
+              // The TikTok script can be present before its renderer is ready.
+            }
           }
         });
       } else if (video.thumbnailUrl) {
@@ -180,13 +190,13 @@
       }
     } else if (canUseVideo) {
       const element = document.createElement("video");
-      element.src = video.playbackUrl;
       element.poster = video.thumbnailUrl || "";
       element.preload = "metadata";
       element.playsInline = true;
       element.muted = settings.muted !== false;
       element.controls = true;
       element.addEventListener("play", () => postEvent(root, { type: "VIEW", videoId: video.id }), { once: true });
+      attachVideoSource(element, video.playbackUrl);
       media.appendChild(element);
     } else if (video.thumbnailUrl) {
       const image = document.createElement("img");
@@ -233,6 +243,51 @@
     if (!tag) return "";
     const href = tag.clickUrl || (tag.handle ? `/products/${tag.handle}` : "#");
     return `<a class="tvc-widget-product-link" href="${escapeAttribute(href)}" data-tvc-video="${escapeAttribute(video.id)}" data-tvc-tag="${escapeAttribute(tag.id)}" data-tvc-product="${escapeAttribute(tag.productId)}" data-tvc-variant="${escapeAttribute(tag.variantId || "")}">${escapeHtml(tag.ctaLabel || "Shop now")}</a>`;
+  };
+
+  const attachVideoSource = (element, url) => {
+    if (!isHlsUrl(url) || element.canPlayType("application/vnd.apple.mpegurl") || element.canPlayType("application/x-mpegURL")) {
+      element.src = url;
+      return;
+    }
+
+    loadHls().then((Hls) => {
+      if (Hls && Hls.isSupported && Hls.isSupported()) {
+        const hls = new Hls();
+        hls.loadSource(url);
+        hls.attachMedia(element);
+        return;
+      }
+
+      element.src = url;
+    }).catch(() => {
+      element.src = url;
+    });
+  };
+
+  const isHlsUrl = (url) => /\.m3u8(?:[?#]|$)/i.test(url || "");
+
+  const loadHls = () => {
+    if (window.Hls) return Promise.resolve(window.Hls);
+    if (hlsLoader) return hlsLoader;
+
+    hlsLoader = new Promise((resolve, reject) => {
+      const existing = document.querySelector(`script[src="${HLS_SCRIPT_SRC}"]`);
+      if (existing) {
+        existing.addEventListener("load", () => resolve(window.Hls), { once: true });
+        existing.addEventListener("error", () => reject(new Error("Failed to load HLS player.")), { once: true });
+        return;
+      }
+
+      const script = document.createElement("script");
+      script.src = HLS_SCRIPT_SRC;
+      script.async = true;
+      script.onload = () => resolve(window.Hls);
+      script.onerror = () => reject(new Error("Failed to load HLS player."));
+      document.head.appendChild(script);
+    });
+
+    return hlsLoader;
   };
 
   const escapeHtml = (value) =>

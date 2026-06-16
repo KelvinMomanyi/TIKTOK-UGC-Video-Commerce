@@ -473,6 +473,12 @@ body {
   color: #7a4b00;
 }
 
+.tvc-callout--critical {
+  border-color: #fecdca;
+  background: #fff5f5;
+  color: var(--tvc-critical);
+}
+
 .tvc-steps {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));

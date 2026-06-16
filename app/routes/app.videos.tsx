@@ -9,12 +9,13 @@ import { PageHeader } from "../components/ui/PageHeader";
 import { ensureMerchant } from "../services/merchant.server";
 import {
   createDirectUpload,
+  createExternalVideo,
   createTikTokImport,
   getVideosPage,
   markVideoArchived,
 } from "../services/video.server";
 import { badRequest, ok } from "../utils/http.server";
-import { numberValue, stringValue } from "../utils/validation";
+import { numberValue, optionalStringValue, stringValue } from "../utils/validation";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { admin, session } = await authenticate.admin(request);
@@ -70,6 +71,18 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       });
     }
 
+    if (intent === "add_external") {
+      const video = await createExternalVideo(merchant, {
+        title: stringValue(formData, "title", "Hosted video"),
+        caption: optionalStringValue(formData, "caption"),
+        playbackUrl: stringValue(formData, "playbackUrl"),
+        thumbnailUrl: optionalStringValue(formData, "thumbnailUrl"),
+        aspectRatio: optionalStringValue(formData, "aspectRatio"),
+      });
+
+      return redirect(`/app/videos/${video.id}`);
+    }
+
     if (intent === "archive_video") {
       await markVideoArchived(merchant, stringValue(formData, "videoId"));
       return redirect("/app/videos");
@@ -120,7 +133,7 @@ export default function VideosPage() {
           </div>
         </section>
 
-        <div className="tvc-grid tvc-grid--2">
+        <div className="tvc-grid tvc-grid--3">
           <section className="tvc-card">
             <div className="tvc-card__body tvc-stack">
               <h2 style={{ margin: 0 }}>Manual upload</h2>
@@ -135,7 +148,7 @@ export default function VideosPage() {
                 <input type="hidden" name="intent" value="import_tiktok" />
                 <label className="tvc-label">
                   TikTok video URL
-                  <input className="tvc-input" name="url" placeholder="https://www.tiktok.com/@creator/video/..." required />
+                  <input className="tvc-input" name="url" type="url" placeholder="https://www.tiktok.com/@creator/video/..." required />
                 </label>
                 <div className="tvc-row">
                   <p className="tvc-subtitle">
@@ -143,6 +156,36 @@ export default function VideosPage() {
                   </p>
                   <s-button variant="primary" type="submit" disabled={importing}>
                     Import
+                  </s-button>
+                </div>
+              </Form>
+            </div>
+          </section>
+
+          <section className="tvc-card">
+            <div className="tvc-card__body tvc-stack">
+              <h2 style={{ margin: 0 }}>Hosted video URL</h2>
+              <Form method="post" className="tvc-stack">
+                <input type="hidden" name="intent" value="add_external" />
+                <label className="tvc-label">
+                  Title
+                  <input className="tvc-input" name="title" placeholder="Summer try-on reel" required />
+                </label>
+                <label className="tvc-label">
+                  Playback URL
+                  <input className="tvc-input" name="playbackUrl" type="url" placeholder="https://.../video.mp4 or .../video.m3u8" required />
+                </label>
+                <label className="tvc-label">
+                  Thumbnail URL
+                  <input className="tvc-input" name="thumbnailUrl" type="url" placeholder="https://.../thumbnail.jpg" />
+                </label>
+                <input type="hidden" name="aspectRatio" value="9:16" />
+                <div className="tvc-row">
+                  <p className="tvc-subtitle">
+                    Use this when your file is already hosted by Mux, Cloudflare Stream, Shopify files, or another CDN.
+                  </p>
+                  <s-button variant="primary" type="submit" disabled={importing}>
+                    Add URL
                   </s-button>
                 </div>
               </Form>

@@ -24,7 +24,7 @@ export function UploadPanel() {
   const selectedFile = fileRef.current;
   const fileLabel = useMemo(() => {
     if (!selectedFile) return "MP4, MOV, or WebM up to your provider limit";
-    return `${selectedFile.name} • ${(selectedFile.size / 1024 / 1024).toFixed(1)} MB`;
+    return `${selectedFile.name} - ${(selectedFile.size / 1024 / 1024).toFixed(1)} MB`;
   }, [selectedFile]);
 
   useEffect(() => {
@@ -119,7 +119,9 @@ export function UploadPanel() {
         </div>
       ) : null}
       {error || fetcher.data?.message ? (
-        <span className="tvc-badge tvc-badge--critical">{error ?? fetcher.data?.message}</span>
+        <div className="tvc-callout tvc-callout--critical">
+          {error ?? fetcher.data?.message}
+        </div>
       ) : null}
     </div>
   );
