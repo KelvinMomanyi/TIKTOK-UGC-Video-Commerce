@@ -15,6 +15,7 @@ type UploadActionResponse = {
 export function UploadPanel() {
   const fetcher = useFetcher<UploadActionResponse>();
   const fileRef = useRef<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragActive, setDragActive] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -85,8 +86,9 @@ export function UploadPanel() {
           <strong>Upload a video</strong>
           <div className="tvc-muted">{fileLabel}</div>
         </div>
-        <label>
+        <div>
           <input
+            ref={fileInputRef}
             type="file"
             accept="video/mp4,video/quicktime,video/webm"
             hidden
@@ -95,8 +97,8 @@ export function UploadPanel() {
               if (file) submitFile(file);
             }}
           />
-          <s-button disabled={busy}>Choose file</s-button>
-        </label>
+          <s-button disabled={busy} onClick={() => fileInputRef.current?.click()}>Choose file</s-button>
+        </div>
       </div>
       {progress > 0 ? (
         <div className="tvc-stack">
