@@ -127,8 +127,58 @@
     const media = document.createElement("div");
     media.className = "tvc-widget-media";
 
-    const canUseVideo = video.playbackUrl && !/^https:\/\/(www\.)?tiktok\.com/.test(video.playbackUrl);
-    if (canUseVideo) {
+    const isTikTok = video.source === "TIKTOK" || /^https:\/\/(www\.)?tiktok\.com/.test(video.playbackUrl || "");
+    const canUseVideo = video.playbackUrl && !isTikTok;
+
+    if (isTikTok && video.embedHtml) {
+      const wrapper = document.createElement("div");
+      wrapper.className = "tvc-widget-tiktok-embed";
+      wrapper.innerHTML = video.embedHtml;
+      const existingScript = wrapper.querySelector("script");
+      if (existingScript) existingScript.remove();
+      media.appendChild(wrapper);
+      requestAnimationFrame(() => {
+        if (!document.querySelector("script[src*=\"tiktok.com/embed.js\"]")) {
+          const script = document.createElement("script");
+          script.src = "https://www.tiktok.com/embed.js";
+          script.async = true;
+          document.body.appendChild(script);
+        } else if (window.tiktokEmbed && typeof window.tiktokEmbed.lib === "object") {
+          try { window.tiktokEmbed.lib.render(); } catch (_) {}
+        }
+      });
+    } else if (isTikTok && video.playbackUrl) {
+      const wrapper = document.createElement("div");
+      wrapper.className = "tvc-widget-tiktok-embed";
+      const videoIdMatch = video.playbackUrl.match(/\/video\/(\d+)/);
+      if (videoIdMatch) {
+        const blockquote = document.createElement("blockquote");
+        blockquote.className = "tiktok-embed";
+        blockquote.setAttribute("cite", video.playbackUrl);
+        blockquote.setAttribute("data-video-id", videoIdMatch[1]);
+        blockquote.style.maxWidth = "100%";
+        const section = document.createElement("section");
+        blockquote.appendChild(section);
+        wrapper.appendChild(blockquote);
+        media.appendChild(wrapper);
+        requestAnimationFrame(() => {
+          if (!document.querySelector("script[src*=\"tiktok.com/embed.js\"]")) {
+            const script = document.createElement("script");
+            script.src = "https://www.tiktok.com/embed.js";
+            script.async = true;
+            document.body.appendChild(script);
+          } else if (window.tiktokEmbed && typeof window.tiktokEmbed.lib === "object") {
+            try { window.tiktokEmbed.lib.render(); } catch (_) {}
+          }
+        });
+      } else if (video.thumbnailUrl) {
+        const image = document.createElement("img");
+        image.src = video.thumbnailUrl;
+        image.alt = "";
+        image.loading = "lazy";
+        media.appendChild(image);
+      }
+    } else if (canUseVideo) {
       const element = document.createElement("video");
       element.src = video.playbackUrl;
       element.poster = video.thumbnailUrl || "";

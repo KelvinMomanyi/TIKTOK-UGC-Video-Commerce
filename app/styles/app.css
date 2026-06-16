@@ -343,6 +343,31 @@ body {
   transform: translate(-50%, -50%);
 }
 
+.tvc-tiktok-embed-stage {
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.tvc-tiktok-embed-stage blockquote.tiktok-embed {
+  margin: 0 !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+}
+
+.tvc-tiktok-embed-stage iframe {
+  width: 100% !important;
+  max-width: 100% !important;
+  border: none;
+}
+
+.tvc-hotspot-stage iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
 .tvc-table {
   width: 100%;
   border-collapse: collapse;

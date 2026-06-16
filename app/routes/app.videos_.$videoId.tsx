@@ -1,4 +1,4 @@
-import { useMemo, useState, type KeyboardEvent, type MouseEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type MouseEvent } from "react";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { Form, Link, redirect, useLoaderData, useNavigation } from "react-router";
 import { authenticate } from "../shopify.server";
@@ -29,6 +29,10 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const merchant = await ensureMerchant(session, admin);
   const video = await getVideoForMerchant(merchant, params.videoId ?? "");
 
+  const meta = video.metadata && typeof video.metadata === "object" && !Array.isArray(video.metadata)
+    ? (video.metadata as Record<string, unknown>)
+    : {};
+
   return {
     video: {
       id: video.id,
@@ -37,7 +41,9 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       status: video.status,
       source: video.source,
       playbackUrl: video.playbackUrl,
+      originalUrl: video.originalUrl,
       thumbnailUrl: video.thumbnailUrl,
+      embedHtml: video.source === "TIKTOK" && typeof meta.html === "string" ? meta.html : null,
       views: video.views,
       clicks: video.clicks,
       conversions: video.conversions,
@@ -156,11 +162,67 @@ export default function VideoDetailPage() {
   const selectedVariant = selectedProduct?.variants[0];
   const busy = navigation.state !== "idle";
 
+  const tiktokEmbedRef = useRef<HTMLDivElement>(null);
+  const isTikTok = video.source === "TIKTOK";
+
+  useEffect(() => {
+    if (!isTikTok || !tiktokEmbedRef.current) return;
+    if (!document.querySelector("script[src*='tiktok.com/embed.js']")) {
+      const script = document.createElement("script");
+      script.src = "https://www.tiktok.com/embed.js";
+      script.async = true;
+      document.body.appendChild(script);
+    } else if ((window as any).tiktokEmbed?.lib) {
+      try { (window as any).tiktokEmbed.lib.render(); } catch (_) {}
+    }
+  }, [isTikTok, video.embedHtml, video.originalUrl]);
+
   const preview = useMemo(() => {
+    if (isTikTok && video.embedHtml) {
+      return (
+        <div
+          ref={tiktokEmbedRef}
+          className="tvc-tiktok-embed-stage"
+          dangerouslySetInnerHTML={{ __html: video.embedHtml.replace(/<script[^>]*>.*?<\/script>/gi, "") }}
+        />
+      );
+    }
+
+    if (isTikTok && video.originalUrl) {
+      const videoIdMatch = video.originalUrl.match(/\/video\/(\d+)/);
+      if (videoIdMatch) {
+        return (
+          <div ref={tiktokEmbedRef} className="tvc-tiktok-embed-stage">
+            <blockquote
+              className="tiktok-embed"
+              cite={video.originalUrl}
+              data-video-id={videoIdMatch[1]}
+              style={{ maxWidth: "100%", margin: 0 }}
+            >
+              <section />
+            </blockquote>
+          </div>
+        );
+      }
+    }
+
+    if (video.playbackUrl && !isTikTok) {
+      return (
+        <video
+          src={video.playbackUrl}
+          poster={video.thumbnailUrl ?? undefined}
+          controls
+          playsInline
+          muted
+          preload="metadata"
+          style={{ width: "100%", height: "100%", objectFit: "cover" }}
+        />
+      );
+    }
+
     if (video.thumbnailUrl) return <img src={video.thumbnailUrl} alt="" />;
-    if (video.playbackUrl?.endsWith(".m3u8")) return <div className="tvc-video-thumb__fallback">Streaming preview ready</div>;
     return <div className="tvc-video-thumb__fallback">Preview unavailable</div>;
-  }, [video.thumbnailUrl, video.playbackUrl]);
+  }, [isTikTok, video.embedHtml, video.originalUrl, video.playbackUrl, video.thumbnailUrl]);
 
   function setHotspotFromPointer(event: MouseEvent<HTMLDivElement>) {
     const rect = event.currentTarget.getBoundingClientRect();

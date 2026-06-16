@@ -19,8 +19,10 @@ export type StorefrontVideo = {
   id: string;
   title: string;
   caption?: string;
+  source?: "TIKTOK" | "UPLOAD" | "EXTERNAL";
   playbackUrl?: string;
   thumbnailUrl?: string;
+  embedHtml?: string;
   durationSeconds?: number;
   aspectRatio?: string;
   tags: StorefrontProductTag[];

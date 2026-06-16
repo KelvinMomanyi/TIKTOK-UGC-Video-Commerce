@@ -134,31 +134,40 @@ export async function publicWidgetPayload(publicToken: string): Promise<Storefro
       layout: widget.layout,
       settings: jsonObject(widget.settings),
     },
-    videos: readyVideos.map(({ video }) => ({
-      id: video.id,
-      title: video.title,
-      caption: video.caption ?? undefined,
-      playbackUrl: video.playbackUrl ?? undefined,
-      thumbnailUrl: video.thumbnailUrl ?? undefined,
-      durationSeconds: video.durationSeconds ?? undefined,
-      aspectRatio: video.aspectRatio ?? undefined,
-      tags: video.productTags.map((tag) => ({
-        id: tag.id,
-        productId: tag.shopifyProductId,
-        variantId: tag.shopifyVariantId ?? undefined,
-        handle: tag.productHandle ?? undefined,
-        title: tag.title,
-        imageUrl: tag.imageUrl ?? undefined,
-        price: tag.priceAmount?.toString(),
-        currencyCode: tag.currencyCode ?? undefined,
-        x: tag.x,
-        y: tag.y,
-        startTimeSeconds: tag.startTimeSeconds,
-        endTimeSeconds: tag.endTimeSeconds ?? undefined,
-        ctaLabel: tag.ctaLabel,
-        clickUrl: tag.clickUrl ?? undefined,
-      })),
-    })),
+    videos: readyVideos.map(({ video }) => {
+      const meta = jsonObject(video.metadata);
+      const embedHtml = video.source === "TIKTOK" && typeof meta.html === "string"
+        ? meta.html
+        : undefined;
+
+      return {
+        id: video.id,
+        title: video.title,
+        caption: video.caption ?? undefined,
+        source: video.source,
+        playbackUrl: video.playbackUrl ?? undefined,
+        thumbnailUrl: video.thumbnailUrl ?? undefined,
+        embedHtml,
+        durationSeconds: video.durationSeconds ?? undefined,
+        aspectRatio: video.aspectRatio ?? undefined,
+        tags: video.productTags.map((tag) => ({
+          id: tag.id,
+          productId: tag.shopifyProductId,
+          variantId: tag.shopifyVariantId ?? undefined,
+          handle: tag.productHandle ?? undefined,
+          title: tag.title,
+          imageUrl: tag.imageUrl ?? undefined,
+          price: tag.priceAmount?.toString(),
+          currencyCode: tag.currencyCode ?? undefined,
+          x: tag.x,
+          y: tag.y,
+          startTimeSeconds: tag.startTimeSeconds,
+          endTimeSeconds: tag.endTimeSeconds ?? undefined,
+          ctaLabel: tag.ctaLabel,
+          clickUrl: tag.clickUrl ?? undefined,
+        })),
+      };
+    }),
     diagnostics: {
       attachedVideos: widget.widgetVideos.length,
       readyVideos: readyVideos.length,
